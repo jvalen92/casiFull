@@ -6,7 +6,7 @@ class RutinasController < ApplicationController
 
   # GET /entrenadors/:entrenador_id/usuarios/:usuario_id/rutinas
   def index
-    json_response(@entrenador.usuarios.find(&:id).rutinas)
+    json_response(@entrenador.usuarios.find_by(id: params[:usuario_id]).rutinas)
   end
 
   # GET /entrenadors/:entrenador_id/usuarios/:usuario_id/rutinas/:id
@@ -16,7 +16,7 @@ class RutinasController < ApplicationController
 
   # POST /todos/:todo_id/items
   def create
-    @entrenador.usuarios.find(&:id).create!(rutina_params)
+    @entrenador.usuarios.find_by(id: params[:usuario_id]).rutinas.create!(rutina_params)
     json_response(@entrenador, :created)
   end
 
@@ -45,11 +45,11 @@ class RutinasController < ApplicationController
 
 
   def set_entrenador_usuario
-    @x= Usuario.find(params [:usuario_id])
+    @usuario= Usuario.find(params [:usuario_id])
   end
 
   def set_entrenador_usuario_rutina
-    @rutina = @entrenador.usuario.find(&:id).rutinas.find_by!(id: params[:id]) if @entrenador
+    @rutina = @entrenador.usuarios.find_by(id: params[:usuario_id]).rutinas.find_by!(id: params[:id])if @entrenador
   end
 
 end
