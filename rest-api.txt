@@ -1,0 +1,166 @@
+rails new todos-api --api -T --database=postgresql
+
+#edit the Gemfile and add cors gem
+
+bundle install
+
+edit config/initializers/cors.rb
+
+rails g model NameModel raw:type model:references (belong to model)
+
+#validate rows params adding this at the end of the model.rb
+validates_presence_of :row1, :row2
+
+#declare a model association adding this in the top of the model.rb
+has_many :models, dependent: :destroy
+
+#generate the controllers
+rails g controller Models
+
+#specify the routes
+
+resources:models do
+    resources :models
+end
+
+#to see the app routes you can type:
+rails routes
+---------------------------------------------------------
+
+#declare the verbs (GET , POST, PUT, DELETE)
+#first you have add this line
+
+before_action :set_model, only: [:show, :update, :destroy]
+
+# GET /models
+  def index
+    @models = Model.all
+    json_response(@models)
+  end
+
+  # POST /models
+  def create
+    @model = Model.create!(model_params)
+    json_response(@model, :created)
+  end
+
+  # GET /models/:id
+  def show
+    json_response(@model)
+  end
+
+  # PUT /models/:id
+  def update
+    @model.update(model_params)
+    head :no_content
+  end
+
+  # DELETE /models/:id
+  def destroy
+    @model.destroy
+    head :no_content
+  end
+
+  private
+
+  def model_params
+    # whitelist params
+    params.permit(:row1, :row2)
+  end
+
+  def set_model
+    @model = Model.find(params[:id])
+  end
+------------------------------------------------------------------
+
+#create the Response concern in app/controllers/concerns as response.rb
+
+module Response
+  def json_response(object, status = :ok)
+    render json: object, status: status
+  end
+end
+
+#create the Response concern in app/controllers/concerns as exception_handler.rb
+
+module ExceptionHandler
+  # provides the more graceful `included` method
+  extend ActiveSupport::Concern
+
+  included do
+    rescue_from ActiveRecord::RecordNotFound do |e|
+      json_response({ message: e.message }, :not_found)
+    end
+
+    rescue_from ActiveRecord::RecordInvalid do |e|
+      json_response({ message: e.message }, :unprocessable_entity)
+    end
+  end
+end
+
+#edit app/controllers/application_controller.rb
+
+  include Response
+  include ExceptionHandler
+-----------------------------------------------------------------
+
+
+#use rails s to test your app and check the next commands
+
+# GET /models
+ http :3000/models
+# POST /models
+ http POST :3000/models raw1=value1 raw2=value2
+# PUT /models/:id
+ http PUT :3000/models/id param=value
+# DELETE /models/:id
+ http DELETE :3000/models/id
+
+-------------------------------------------------------------------
+
+#proof for this app
+
+# Entrenador model
+# GET /models
+ http :3000/entrenadors
+# POST /models
+ http POST :3000/entrenadors nombre=value1 password=value2
+# PUT /models/:id
+ http PUT :3000/entrenadors/id param=value
+# DELETE /models/:id
+ http DELETE :3000/entrenadors/id
+
+
+# Usuario model
+# GET /models
+ http :3000/entrenadors/entrenador_id/usuarios
+# POST /models
+ http POST :3000/entrenadors/entrenador_id/usuarios nombre=value1 password=value2
+# PUT /models/:id
+ http PUT :3000/entrenadors/entrenador_id/usuarios param=value
+# DELETE /models/:id
+ http DELETE :3000/entrenadors/entrenador_id/usuarios/id
+
+
+# Rutina model
+# GET /models
+ http :3000/entrenadors/entrenador_id/usuarios/usuarios_id/rutinas
+# POST /models
+ http POST :3000/entrenadors/entrenador_id/usuarios/usuarios_id/rutinas tipo=value1 
+# PUT /models/:id
+ http PUT :3000/entrenadors/entrenador_id/usuarios/usuarios_id/rutinas/rutina_id param=value
+# DELETE /models/:id
+ http DELETE :3000/entrenadors/entrenador_id/usuarios/usuarios_id/rutinas/rutina_id
+
+# Ejercicio model
+# GET /models
+ http :3000/entrenadors/entrenador_id/usuarios/usuarios_id/rutinas/rutina_id/ejercicios
+# POST /models
+ http POST :3000/entrenadors/entrenador_id/usuarios/usuarios_id/rutinas/rutina_id/ejercicios nombre=value musculo=value repeticiones=value maquina=value  peso=value series=value 
+
+# PUT /models/:id
+ http PUT :3000/entrenadors/entrenador_id/usuarios/usuarios_id/rutinas/rutina_id/ejercicios/ejercicio_id param=value
+# DELETE /models/:id
+ http DELETE :3000/entrenadors/entrenador_id/usuarios/usuarios_id/rutinas/rutina_id/ejercicios/ejercicio_id
+
+
